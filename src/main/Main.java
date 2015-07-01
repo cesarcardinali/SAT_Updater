@@ -87,6 +87,10 @@ public class Main {
 			}*/
 			
 			
+			System.out.println("- Creating user cfg bkp");
+			copyScript(new File("Data\\cfgs\\user_cfg.xml"), new File("Data\\cfgs\\user_cfg.xml.bkp"));
+			
+			
 			System.out.println("- Updating DATA folder");
 			writer.write("- Updating DATA folder");
 			try {
@@ -98,6 +102,12 @@ public class Main {
 				writer.close();
 				System.exit(0);
 			}
+			
+			
+			System.out.println("- Restoring user cfg ");
+			copyScript(new File("Data\\cfgs\\user_cfg.xml.bkp"), new File("Data\\cfgs\\user_cfg.xml"));
+			System.out.println("- Deleting old file");
+			new File("Data\\cfgs\\user_cfg.xml.bkp").delete();
 			
 			
 			System.out.println("- Starting new application");
