@@ -67,24 +67,12 @@ public class Main {
 				copyScript(new File("S:\\Rio_Itu\\SAT\\BatteryTool.jar"), new File("BatteryTool.jar"));
 			} catch (IOException e1) {
 				System.out.println("Could not update the JAR file. Process cancelled");
-				writer.write("Could not update the JAR file. Process cancelled");
+				writer.write("Could not update the JAR file. Process cancelled\n");
+				writer.write(e1.getMessage() + "\n");
 				e1.printStackTrace();
 				writer.close();
 				System.exit(0);
 			}
-			
-			
-			/*try {
-				File dataFolder = new File("Data");
-				if(dataFolder.isDirectory()){
-					System.out.println("- Deleting old DATA folder: " + dataFolder);
-					FileUtils.deleteDirectory(dataFolder);
-				}
-			} catch (IOException e) {
-				System.out.println("Could not update the DATA folder. Process cancelled");
-				e.printStackTrace();
-				System.exit(0);
-			}*/
 			
 			
 			System.out.println("- Creating user cfg bkp");
@@ -96,10 +84,11 @@ public class Main {
 			System.out.println("- Updating DATA folder");
 			writer.write("- Updating DATA folder\n");
 			try {
-				FileUtils.copyDirectory(new File("S:\\Rio_Itu\\SAT\\Data"), new File("\\Data"));
+				FileUtils.copyDirectory(new File("S:\\Rio_Itu\\SAT\\Data"), new File("Data"));
 			} catch (IOException e) {
 				System.out.println("Could not update the DATA folder. Process cancelled");
 				writer.write("Could not update the DATA folder. Process cancelled\n");
+				writer.write(e.getMessage() + "\n");
 				e.printStackTrace();
 				writer.close();
 				System.exit(0);
@@ -111,7 +100,7 @@ public class Main {
 			copyScript(new File("Data\\cfgs\\user_cfg.xml.bkp"), new File("Data\\cfgs\\user_cfg.xml"));
 			copyScript(new File("Data\\cfgs\\pass.bkp"), new File("Data\\cfgs\\pass.ini"));
 			System.out.println("- Deleting old file");
-			writer.write("- Deleting old file");
+			writer.write("- Deleting old file\n");
 			new File("Data\\cfgs\\user_cfg.xml.bkp").delete();
 			new File("Data\\cfgs\\pass.bkp").delete();
 			
@@ -127,6 +116,7 @@ public class Main {
 			} catch (IOException e) {
 				System.out.println("Could not restart the application");
 				writer.write("Could not restart the application\n");
+				writer.write(e.getMessage() + "\n");
 				e.printStackTrace();
 				writer.close();
 				System.exit(0);
