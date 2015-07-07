@@ -20,6 +20,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Main extends JFrame {
 	/**
@@ -183,24 +184,50 @@ public class Main extends JFrame {
 			System.out.println("- Creating user cfg bkp");
 			writer.write("- Creating user cfg bkp\n");
 			lblNewLabel_1.setVisible(true);
+			try{
 			copyScript(new File("Data\\cfgs\\user_cfg.xml"), new File("Data\\cfgs\\user_cfg.xml.bkp"));
+			}catch (IOException e1) {
+				new File("Data\\cfgs\\user_cfg.xml").createNewFile();
+				copyScript(new File("Data\\cfgs\\user_cfg.xml"), new File("Data\\cfgs\\user_cfg.xml.bkp"));
+			}
 			copyScript(new File("Data\\cfgs\\pass.ini"), new File("Data\\cfgs\\pass.bkp"));
 			
 			
 			System.out.println("- Updating DATA folder");
-			writer.write("- Updating DATA folder\n");
+			writer.write("- Updating DATA folder");
 			lblNewLabel_2.setVisible(true);
-			try {
-				FileUtils.copyDirectory(new File("S:\\Rio_Itu\\SAT\\Data"), new File("Data"));
-			} catch (IOException e) {
-				System.out.println("Could not update the DATA folder. Process cancelled");
-				writer.write("Could not update the DATA folder. Process cancelled\n");
-				writer.write(e.getMessage() + "\n");
-				e.printStackTrace();
-				writer.close();
-				System.exit(0);
-			}
-			
+				ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File("S:\\Rio_Itu\\SAT_Test\\Data"), null, true));
+				ArrayList<File> alocal = new ArrayList<File>(FileUtils.listFiles(new File("Data"), null, true));
+				ArrayList<String> namesremote = new ArrayList<String>(aremote.size());
+				ArrayList<String> nameslocal = new ArrayList<String>(alocal.size());
+				System.out.println(aremote);
+				System.out.println(alocal);
+				
+				for(int i = 0;i<aremote.size();i++){
+					namesremote.add(aremote.get(i).getName());					
+				}
+				
+				for(int i = 0;i<alocal.size();i++){
+					nameslocal.add(alocal.get(i).getName());
+				}
+				
+				for(int i = 0, j = 0;i<namesremote.size();i++){
+					if(!namesremote.get(i).contains(".db")){
+						if(!nameslocal.contains(namesremote.get(i))){
+							System.out.println("Nao contem o FileName: "+namesremote.get(i));
+							FileUtils.copyFileToDirectory(aremote.get(i), new File("Data"));
+						}else{
+							System.out.println("Contem o FileName: "+namesremote.get(i));
+							if(aremote.get(i).lastModified() > alocal.get(nameslocal.indexOf(namesremote.get(i))).lastModified())
+							{
+								System.out.println("Arquivo mais novo encontrado: "+namesremote.get(i));
+								FileUtils.copyFileToDirectory(aremote.get(i), new File("Data"));
+							}
+						}
+					}
+				
+					
+				}			
 			
 			System.out.println("- Restoring user cfg\n");
 			writer.write("- Restoring user cfg\n");
