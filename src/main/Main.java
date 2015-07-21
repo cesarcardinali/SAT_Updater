@@ -12,6 +12,10 @@ import java.awt.FlowLayout;
 import javax.swing.SwingConstants;
 
 import org.apache.commons.io.FileUtils;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 
 import java.awt.Font;
 import java.awt.Dimension;
@@ -34,12 +38,21 @@ public class Main extends JFrame {
 	private static JLabel lblNewLabel_3;
 	private static JLabel lblNewLabel_4;
 	private static JLabel lblNewLabel_5;
+	private static final String configLocation = "Data/cfgs/system_cfg.xml";
+	private static String toolFile;
+	private static String contentFolder;
+	private static String usrConfig;
+	private static String passConfig;
+	private static String updateFolder1;
+	private static String updateFolder2;
 
 	
 	/**
 	 * Launch application.
 	 */
 	public static void main(String[] args) {
+		
+		
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -50,6 +63,7 @@ public class Main extends JFrame {
 						@Override
 						public void run() {
 							
+							loadInitialData();
 							updateApplication();
 						}
 					}).start();
@@ -151,6 +165,55 @@ public class Main extends JFrame {
 	/**
 	 * Update function.
 	 */
+	
+	private static void loadInitialData() {
+		try{
+			//Abre o arquivo XML
+			File xmlFile = new File(configLocation);
+			
+			//Cria o builder da estrutura XML
+			SAXBuilder builder = new SAXBuilder();
+			
+			//Cria documento formatado de acordo com a lib XML
+			Document document = (Document) builder.build(xmlFile);
+	
+			//Pega o nó raiz do XML
+			Element satNode = document.getRootElement();
+			
+			//Pega o nó referente ao option pane
+			Element crs_jira_paneNode = satNode.getChild("configs");
+			for(Element e : crs_jira_paneNode.getChildren()){
+				if(e.getName().equals("tool_file")){
+					toolFile = (e.getValue());
+					
+				} else if(e.getName().equals("content_folder")){
+					contentFolder = (e.getValue());
+							
+				} else if(e.getName().equals("usr_config")){
+					usrConfig = (e.getValue());
+					
+				} else if(e.getName().equals("pwd_config")){
+					passConfig = (e.getValue());
+					
+				} else if(e.getName().equals("update_path1")){
+					updateFolder1 = (e.getValue());
+					
+				} else if(e.getName().equals("update_path2")){
+					updateFolder2 = (e.getValue());
+					
+				} 
+			}
+						
+			System.out.println("Configs: " + configLocation);
+			System.out.println("Content Folder: " + contentFolder);
+			System.out.println("Update path1: " + updateFolder1 + "\nUpdate path2: " + updateFolder2 + "\nUser Config: " + usrConfig + "\nPass Config: " + passConfig);
+			System.out.println("Options Loaded");
+		
+		} catch (IOException | JDOMException e){
+			e.printStackTrace();
+		}
+	}
+	
 	private static void updateApplication() {
 		BufferedWriter writer = null;
 		lblNewLabel_0.setVisible(true);
@@ -160,7 +223,6 @@ public class Main extends JFrame {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
-		
 		try {
 			writer = new BufferedWriter(new FileWriter(new File("update_log.txt")));
 			System.out.println("Updating ...");
@@ -170,7 +232,7 @@ public class Main extends JFrame {
 			lblNewLabel_0.setVisible(true);
 			writer.write("- Updating jar file\n");
 			try {
-				copyScript(new File("S:\\Rio_Itu\\SAT\\BatteryTool.jar"), new File("BatteryTool.jar"));
+				copyScript(new File(updateFolder1 + toolFile), new File(toolFile));
 			} catch (IOException e1) {
 				System.out.println("Could not update the JAR file. Process cancelled");
 				writer.write("Could not update the JAR file. Process cancelled\n");
@@ -185,19 +247,19 @@ public class Main extends JFrame {
 			writer.write("- Creating user cfg bkp\n");
 			lblNewLabel_1.setVisible(true);
 			try{
-			copyScript(new File("Data\\cfgs\\user_cfg.xml"), new File("Data\\cfgs\\user_cfg.xml.bkp"));
+			copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
 			}catch (IOException e1) {
-				new File("Data\\cfgs\\user_cfg.xml").createNewFile();
-				copyScript(new File("Data\\cfgs\\user_cfg.xml"), new File("Data\\cfgs\\user_cfg.xml.bkp"));
+				new File(contentFolder + usrConfig).createNewFile();
+				copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
 			}
-			copyScript(new File("Data\\cfgs\\pass.ini"), new File("Data\\cfgs\\pass.bkp"));
+			copyScript(new File(contentFolder + passConfig), new File(contentFolder + passConfig + ".bkp"));
 			
 			
 			System.out.println("- Updating DATA folder");
 			writer.write("- Updating DATA folder");
 			lblNewLabel_2.setVisible(true);
-				ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File("S:\\Rio_Itu\\SAT_Test\\Data"), null, true));
-				ArrayList<File> alocal = new ArrayList<File>(FileUtils.listFiles(new File("Data"), null, true));
+				ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File(updateFolder1 + contentFolder), null, true));
+				ArrayList<File> alocal = new ArrayList<File>(FileUtils.listFiles(new File(contentFolder), null, true));
 				ArrayList<String> namesremote = new ArrayList<String>(aremote.size());
 				ArrayList<String> nameslocal = new ArrayList<String>(alocal.size());
 				System.out.println(aremote);
@@ -211,17 +273,17 @@ public class Main extends JFrame {
 					nameslocal.add(alocal.get(i).getName());
 				}
 				
-				for(int i = 0, j = 0;i<namesremote.size();i++){
+				for(int i = 0;i<namesremote.size();i++){
 					if(!namesremote.get(i).contains(".db")){
 						if(!nameslocal.contains(namesremote.get(i))){
 							System.out.println("Nao contem o FileName: "+namesremote.get(i));
-							FileUtils.copyFileToDirectory(aremote.get(i), new File("Data"));
+							FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
 						}else{
 							System.out.println("Contem o FileName: "+namesremote.get(i));
 							if(aremote.get(i).lastModified() > alocal.get(nameslocal.indexOf(namesremote.get(i))).lastModified())
 							{
 								System.out.println("Arquivo mais novo encontrado: "+namesremote.get(i));
-								FileUtils.copyFileToDirectory(aremote.get(i), new File("Data"));
+								FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
 							}
 						}
 					}
@@ -232,20 +294,20 @@ public class Main extends JFrame {
 			System.out.println("- Restoring user cfg\n");
 			writer.write("- Restoring user cfg\n");
 			lblNewLabel_3.setVisible(true);
-			copyScript(new File("Data\\cfgs\\user_cfg.xml.bkp"), new File("Data\\cfgs\\user_cfg.xml"));
-			copyScript(new File("Data\\cfgs\\pass.bkp"), new File("Data\\cfgs\\pass.ini"));
+			copyScript(new File(contentFolder + usrConfig + ".bkp"), new File(contentFolder + usrConfig));
+			copyScript(new File(contentFolder + passConfig + ".bkp"), new File(contentFolder + passConfig));
 			System.out.println("- Deleting old file");
 			writer.write("- Deleting old file\n");
 			lblNewLabel_4.setVisible(true);
-			new File("Data\\cfgs\\user_cfg.xml.bkp").delete();
-			new File("Data\\cfgs\\pass.bkp").delete();
+			new File(contentFolder + usrConfig + ".bkp").delete();
+			new File(contentFolder + passConfig + ".bkp").delete();
 			
 			
 			lblNewLabel_5.setVisible(true);
 			System.out.println("- Starting new application");
 			writer.write("- Starting new application\n");
 			
-			ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd " + new File("").getAbsolutePath() + " && java -jar \"Batterytool.jar\"");
+			ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd " + new File("").getAbsolutePath() + " && java -jar \"" + toolFile + "\"");
 			
 	        System.out.println("Update successful");
 	        writer.write("Update successful\n");
