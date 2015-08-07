@@ -39,12 +39,15 @@ public class Main extends JFrame {
 	private static JLabel lblNewLabel_4;
 	private static JLabel lblNewLabel_5;
 	private static final String configLocation = "Data/cfgs/system_cfg.xml";
+	private static String updaterLocation;
 	private static String toolFile;
 	private static String contentFolder;
 	private static String usrConfig;
 	private static String passConfig;
 	private static String updateFolder1;
 	private static String updateFolder2;
+	private static String ovrwt_usrcfg;
+	private static String clean_install;
 
 	
 	/**
@@ -65,6 +68,7 @@ public class Main extends JFrame {
 							
 							loadInitialData();
 							updateApplication();
+
 						}
 					}).start();
 					
@@ -169,20 +173,20 @@ public class Main extends JFrame {
 	private static void loadInitialData() {
 		try{
 			//Abre o arquivo XML
-			File xmlFile = new File(configLocation);
+			File xmlFile1 = new File(configLocation);
 			
 			//Cria o builder da estrutura XML
 			SAXBuilder builder = new SAXBuilder();
 			
 			//Cria documento formatado de acordo com a lib XML
-			Document document = (Document) builder.build(xmlFile);
+			Document sysconfig = (Document) builder.build(xmlFile1);
 	
 			//Pega o nó raiz do XML
-			Element satNode = document.getRootElement();
+			Element satNode = sysconfig.getRootElement();
 			
 			//Pega o nó referente ao option pane
-			Element crs_jira_paneNode = satNode.getChild("configs");
-			for(Element e : crs_jira_paneNode.getChildren()){
+			Element tool_configuration = satNode.getChild("configs");
+			for(Element e : tool_configuration.getChildren()){
 				if(e.getName().equals("tool_file")){
 					toolFile = (e.getValue());
 					
@@ -201,146 +205,212 @@ public class Main extends JFrame {
 				} else if(e.getName().equals("update_path2")){
 					updateFolder2 = (e.getValue());
 					
-				} 
+				} else if(e.getName().equals("update_config")){
+					updaterLocation = (e.getValue());
+					
+				}
 			}
 						
 			System.out.println("Configs: " + configLocation);
 			System.out.println("Content Folder: " + contentFolder);
-			System.out.println("Update path1: " + updateFolder1 + "\nUpdate path2: " + updateFolder2 + "\nUser Config: " + usrConfig + "\nPass Config: " + passConfig);
-			System.out.println("Options Loaded");
+			System.out.println("Update path1: " + updateFolder1 + "\nUpdate path2: " + updateFolder2 + "\nUser Config: " +
+													"\nUpdate Config: " + updaterLocation + usrConfig + "\nPass Config: " + passConfig);
+			System.out.println("Tool Configuration Loaded");
+		
+		} catch (IOException | JDOMException e){
+			e.printStackTrace();
+		}
+		
+		try{
+			File xmlFile2 = new File(updaterLocation);
+			
+			SAXBuilder builder = new SAXBuilder();
+			
+			Document updconfig = (Document) builder.build(xmlFile2);
+	
+			Element satNode = updconfig.getRootElement();
+			
+			Element updater_configuration = satNode.getChild("configs");
+			for(Element e : updater_configuration.getChildren()){
+				if(e.getName().equals("clean_install")){
+					clean_install = (e.getValue());
+					
+				} else if(e.getName().equals("overwrite_usr_cfg")){
+					ovrwt_usrcfg = (e.getValue());
+							
+				} 
+			}
+						
+			System.out.println("Configs: " + updaterLocation);
+			System.out.println("Clean Install? " + clean_install + "\nOverwrite User Configuration? " + ovrwt_usrcfg);
+			System.out.println("Updater Configuration Loaded");
+			
 		
 		} catch (IOException | JDOMException e){
 			e.printStackTrace();
 		}
 	}
 	
+	
 	private static void updateApplication() {
 		BufferedWriter writer = null;
 		lblNewLabel_0.setVisible(true);
-		/*try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		try {
-			writer = new BufferedWriter(new FileWriter(new File("update_log.txt")));
-			System.out.println("Updating ...");
-			writer.write("Updating ...\n");
-			
-			System.out.println("- Updating jar file");
-			lblNewLabel_0.setVisible(true);
-			writer.write("- Updating jar file\n");
+		
+
 			try {
-				copyScript(new File(updateFolder1 + toolFile), new File(toolFile));
-			} catch (IOException e1) {
-				System.out.println("Could not update the JAR file. Process cancelled");
-				writer.write("Could not update the JAR file. Process cancelled\n");
-				writer.write(e1.getMessage() + "\n");
-				e1.printStackTrace();
-				writer.close();
-				System.exit(0);
-			}
-			
-			
-			System.out.println("- Creating user cfg bkp");
-			writer.write("- Creating user cfg bkp\n");
-			lblNewLabel_1.setVisible(true);
-			try{
-			copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
-			}catch (IOException e1) {
-				new File(contentFolder + usrConfig).createNewFile();
-				copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
-			}
-			copyScript(new File(contentFolder + passConfig), new File(contentFolder + passConfig + ".bkp"));
-			
-			
-			System.out.println("- Updating DATA folder");
-			writer.write("- Updating DATA folder");
-			lblNewLabel_2.setVisible(true);
-				ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File(updateFolder1 + contentFolder), null, true));
-				ArrayList<File> alocal = new ArrayList<File>(FileUtils.listFiles(new File(contentFolder), null, true));
-				ArrayList<String> namesremote = new ArrayList<String>(aremote.size());
-				ArrayList<String> nameslocal = new ArrayList<String>(alocal.size());
-				System.out.println(aremote);
-				System.out.println(alocal);
+				writer = new BufferedWriter(new FileWriter(new File("update_log.txt")));
+				System.out.println("Updating ...");
+				writer.write("Updating ...\n");
 				
-				for(int i = 0;i<aremote.size();i++){
-					namesremote.add(aremote.get(i).getName());					
+				System.out.println("- Updating jar file");
+				lblNewLabel_0.setVisible(true);
+				writer.write("- Updating jar file\n");
+				try {
+					copyScript(new File(updateFolder1 + toolFile), new File(toolFile));
+				} catch (IOException e1) {
+					System.out.println("Could not update the JAR file. Process cancelled");
+					writer.write("Could not update the JAR file. Process cancelled\n");
+					writer.write(e1.getMessage() + "\n");
+					e1.printStackTrace();
+					writer.close();
+					System.exit(0);
+				}
+			
+			//If clean install is enabled
+			if(clean_install.equalsIgnoreCase("true")){
+				System.out.println("Performing a clean reinstallation");
+				writer.write("- Recreating DATA folder\n");
+				lblNewLabel_2.setVisible(true);	
+				
+				FileUtils.cleanDirectory(new File(contentFolder));
+
+				try {
+					FileUtils.copyDirectory(new File(updateFolder1 + contentFolder), new File(contentFolder));
+				} catch (IOException e) {
+					System.out.println("Could not recreate the DATA folder. Process cancelled");
+					writer.write("Could not recreate the DATA folder. Process cancelled\n");
+					writer.write(e.getMessage() + "\n");
+					e.printStackTrace();
+					writer.close();
+					System.exit(0);
 				}
 				
-				for(int i = 0;i<alocal.size();i++){
-					nameslocal.add(alocal.get(i).getName());
-				}
+			//If both updater settings in updater_cfg.xml are set "false"
+			} else {
 				
-				for(int i = 0;i<namesremote.size();i++){
-					if(!namesremote.get(i).contains(".db")){
-						if(!nameslocal.contains(namesremote.get(i))){
-							System.out.println("Nao contem o FileName: "+namesremote.get(i));
-							FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
-						}else{
-							System.out.println("Contem o FileName: "+namesremote.get(i));
-							if(aremote.get(i).lastModified() > alocal.get(nameslocal.indexOf(namesremote.get(i))).lastModified())
-							{
-								System.out.println("Arquivo mais novo encontrado: "+namesremote.get(i));
-								FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
-							}
+					if(!ovrwt_usrcfg.equalsIgnoreCase("true")){
+					
+						System.out.println("- Creating user cfg bkp");
+						writer.write("- Creating user cfg bkp\n");
+						lblNewLabel_1.setVisible(true);
+						try{
+						copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
+						}catch (IOException e1) {
+							new File(contentFolder + usrConfig).createNewFile();
+							copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
 						}
+						copyScript(new File(contentFolder + passConfig), new File(contentFolder + passConfig + ".bkp"));
+					
 					}
 				
+					//If only clean_install updater settings in updater_cfg.xml are set "false"	
+					System.out.println("- Updating DATA folder");
+					writer.write("- Updating DATA folder");
+					lblNewLabel_2.setVisible(true);
+					ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File(updateFolder1 + contentFolder), null, true));
+					ArrayList<File> alocal = new ArrayList<File>(FileUtils.listFiles(new File(contentFolder), null, true));
+					ArrayList<String> namesremote = new ArrayList<String>(aremote.size());
+					ArrayList<String> nameslocal = new ArrayList<String>(alocal.size());
+					System.out.println(aremote);
+					System.out.println(alocal);
 					
-				}			
+					for(int i = 0;i<aremote.size();i++){
+						namesremote.add(aremote.get(i).getName());					
+					}
+					
+					for(int i = 0;i<alocal.size();i++){
+						nameslocal.add(alocal.get(i).getName());
+					}
+					
+					for(int i = 0;i<namesremote.size();i++){
+						if(!namesremote.get(i).contains(".db")){
+							if(!nameslocal.contains(namesremote.get(i))){
+								System.out.println("Nao contem o FileName: "+namesremote.get(i));
+								FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
+							}else{
+								System.out.println("Contem o FileName: "+namesremote.get(i));
+								if(aremote.get(i).lastModified() > alocal.get(nameslocal.indexOf(namesremote.get(i))).lastModified() ||
+										(namesremote.get(i).equals("user_cfg.xml") && ovrwt_usrcfg.equalsIgnoreCase("true")))
+										//The second condition forces "user_cfg.xml" to update if it's set on updater_cfg.xml
+								{
+									System.out.println("Arquivo mais novo encontrado: "+namesremote.get(i));
+									FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
+								}
+							}
+						}						
+					}
+										
+				
+					//If both updater settings in updater_cfg.xml are set "false"
+					if(!ovrwt_usrcfg.equalsIgnoreCase("true")){
+						System.out.println("- Restoring user cfg\n");
+						writer.write("- Restoring user cfg\n");
+						lblNewLabel_3.setVisible(true);
+						copyScript(new File(contentFolder + usrConfig + ".bkp"), new File(contentFolder + usrConfig));
+						copyScript(new File(contentFolder + passConfig + ".bkp"), new File(contentFolder + passConfig));
+						System.out.println("- Deleting old file");
+						writer.write("- Deleting old file\n");
+						lblNewLabel_4.setVisible(true);
+						new File(contentFolder + usrConfig + ".bkp").delete();
+						new File(contentFolder + passConfig + ".bkp").delete();
+					}
 			
-			System.out.println("- Restoring user cfg\n");
-			writer.write("- Restoring user cfg\n");
-			lblNewLabel_3.setVisible(true);
-			copyScript(new File(contentFolder + usrConfig + ".bkp"), new File(contentFolder + usrConfig));
-			copyScript(new File(contentFolder + passConfig + ".bkp"), new File(contentFolder + passConfig));
-			System.out.println("- Deleting old file");
-			writer.write("- Deleting old file\n");
-			lblNewLabel_4.setVisible(true);
-			new File(contentFolder + usrConfig + ".bkp").delete();
-			new File(contentFolder + passConfig + ".bkp").delete();
-			
-			
-			lblNewLabel_5.setVisible(true);
-			System.out.println("- Starting new application");
-			writer.write("- Starting new application\n");
-			
-			ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd " + new File("").getAbsolutePath() + " && java -jar \"" + toolFile + "\"");
-			
-	        System.out.println("Update successful");
-	        writer.write("Update successful\n");
-			try {
-				/*Process p =*/ builder.start();
-				Thread.sleep(1000);
-			} catch (IOException | InterruptedException e) {
-				System.out.println("Could not restart the application");
-				writer.write("Could not restart the application\n");
-				writer.write(e.getMessage() + "\n");
-				e.printStackTrace();
+			}
+						
+				
+				lblNewLabel_5.setVisible(true);
+				System.out.println("- Starting new application");
+				writer.write("- Starting new application\n");
+				
+				ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd " + new File("").getAbsolutePath() + " && java -jar \"" + toolFile + "\"");
+				
+		        System.out.println("Update successful");
+		        writer.write("Update successful\n");
+				try {
+					/*Process p =*/ builder.start();
+					Thread.sleep(1000);
+				} catch (IOException | InterruptedException e) {
+					System.out.println("Could not restart the application");
+					writer.write("Could not restart the application\n");
+					writer.write(e.getMessage() + "\n");
+					e.printStackTrace();
+					writer.close();
+					System.exit(0);
+				}
 				writer.close();
+				
+
+			
+				
+			} catch (IOException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+				try {
+					writer.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				System.exit(0);
 			}
-			writer.close();
-			
-		} catch (IOException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
+		
 			try {
 				writer.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.exit(0);
-		}
-		try {
-			writer.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
 		
 		System.exit(0);
 	}
