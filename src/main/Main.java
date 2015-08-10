@@ -335,15 +335,15 @@ public class Main extends JFrame {
 					for(int i = 0;i<namesremote.size();i++){
 						if(!namesremote.get(i).contains(".db")){
 							if(!nameslocal.contains(namesremote.get(i))){
-								System.out.println("Nao contem o FileName: "+namesremote.get(i));
+								System.out.println("Does not contain FileName: "+namesremote.get(i));
 								FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
 							}else{
-								System.out.println("Contem o FileName: "+namesremote.get(i));
+								System.out.println("Contains FileName: "+namesremote.get(i));
 								if(aremote.get(i).lastModified() > alocal.get(nameslocal.indexOf(namesremote.get(i))).lastModified() ||
 										(namesremote.get(i).equals("user_cfg.xml") && ovrwt_usrcfg.equalsIgnoreCase("true")))
 										//The second condition forces "user_cfg.xml" to update if it's set on updater_cfg.xml
 								{
-									System.out.println("Arquivo mais novo encontrado: "+namesremote.get(i));
+									System.out.println("Newer File: "+namesremote.get(i));
 									FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
 								}
 							}
