@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<SAT_Updater>
-  <configs>
-    <clean_install>false</clean_install>
-	<!-- Warning! Enabling this will erase all your data. Please make sure to backup your important files before setting this with "true" -->
-	<overwrite_usr_cfg>false</overwrite_usr_cfg>
-	<!-- This will permanently substitute your user configuration for a new standard one from the update server if you set with "true" -->
-  </configs>
-</SAT_Updater>
