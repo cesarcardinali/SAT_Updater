@@ -1,16 +1,22 @@
 package main;
 
 
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
-
-import java.awt.FlowLayout;
-
+import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
 
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
@@ -18,22 +24,13 @@ import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 
-import java.awt.Font;
-import java.awt.Dimension;
-import java.awt.Color;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-
 
 public class Main extends JFrame
 {
 	/**
 	 * Global variables.
 	 */
-	private static final long   serialVersionUID = -3060854721871781995L;
+	private static final long   serialVersionUID = 0L;
 	private JPanel              contentPane;
 	private static JLabel       lblNewLabel_0;
 	private static JLabel       lblNewLabel_1;
@@ -42,6 +39,7 @@ public class Main extends JFrame
 	private static JLabel       lblNewLabel_4;
 	private static JLabel       lblNewLabel_5;
 	private static final String configLocation   = "Data/cfgs/system_cfg.xml";
+	private static String       remoteCfgFile;
 	private static String       toolFile;
 	private static String       contentFolder;
 	private static String       usrConfig;
@@ -65,13 +63,13 @@ public class Main extends JFrame
 				{
 					Main frame = new Main();
 					frame.setVisible(true);
+					
 					new Thread(new Runnable()
 					{
 						
 						@Override
 						public void run()
 						{
-							
 							loadInitialData();
 							updateApplication();
 							
@@ -194,8 +192,8 @@ public class Main extends JFrame
 			Element satNode = sysconfig.getRootElement();
 			
 			// Pega o nó referente ao option pane
-			Element tool_configuration = satNode.getChild("configs");
-			for (Element e : tool_configuration.getChildren())
+			Element toolConfiguration = satNode.getChild("configs");
+			for (Element e : toolConfiguration.getChildren())
 			{
 				if (e.getName().equals("tool_file"))
 				{
@@ -227,7 +225,28 @@ public class Main extends JFrame
 					updateFolder2 = (e.getValue() + "/");
 					
 				}
-				else if (e.getName().equals("clean_install"))
+				else if (e.getName().equals("sys_config"))
+				{
+					remoteCfgFile = updateFolder1 + (e.getValue());
+					
+				}
+			}
+			
+			System.out.println("Configs: " + configLocation);
+			System.out.println("Remote Config File: " + remoteCfgFile);
+			System.out.println("Content Folder: " + contentFolder);
+			System.out.println("Update path1: " + updateFolder1 + "\nUpdate path2: " + updateFolder2 + "\nUser Config: " + usrConfig + "\nPass Config: "
+			                   + passConfig);
+			
+			// Now, read the remote system cfg file
+			xmlFile1 = new File(remoteCfgFile);
+			builder = new SAXBuilder();
+			sysconfig = (Document) builder.build(xmlFile1);
+			satNode = sysconfig.getRootElement();
+			toolConfiguration = satNode.getChild("configs");
+			for (Element e : toolConfiguration.getChildren())
+			{
+				if (e.getName().equals("clean_install"))
 				{
 					clean_install = (e.getValue());
 					
@@ -239,23 +258,17 @@ public class Main extends JFrame
 				}
 			}
 			
-			System.out.println("Configs: " + configLocation);
-			System.out.println("Content Folder: " + contentFolder);
-			System.out.println("Update path1: " + updateFolder1 + "\nUpdate path2: " + updateFolder2
-			                   + "\nUser Config: " + usrConfig + "\nPass Config: " + passConfig);
-
-			System.out.println("Clean Install? " + clean_install + "\nOverwrite User Configuration? "
-			                   + ovrwt_usrcfg);
+			System.out.println("Clean Install? " + clean_install + "\nOverwrite User Configuration? " + ovrwt_usrcfg);
 			System.out.println("Updater Configuration Loaded");
 		}
-        catch (JDOMException e1)
-        {
-	        e1.printStackTrace();
-        }
-        catch (IOException e1)
-        {
-	        e1.printStackTrace();
-        }
+		catch (JDOMException e1)
+		{
+			e1.printStackTrace();
+		}
+		catch (IOException e1)
+		{
+			e1.printStackTrace();
+		}
 	}
 	
 	private static void updateApplication()
@@ -315,53 +328,51 @@ public class Main extends JFrame
 					writer.close();
 					System.exit(0);
 				}
-				
-				// If both updater settings in updater_cfg.xml are set "false"
 			}
 			else
 			{
-				
-				if (!ovrwt_usrcfg.equalsIgnoreCase("true"))
+				if (ovrwt_usrcfg.equalsIgnoreCase("false"))
 				{
-					
 					System.out.println("- Creating user cfg bkp");
 					writer.write("- Creating user cfg bkp\n");
 					lblNewLabel_1.setVisible(true);
+					
 					try
 					{
-						copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig
-						                                                         + ".bkp"));
+						copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
 					}
 					catch (IOException e1)
 					{
-						new File(contentFolder + usrConfig).createNewFile();
-						copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig
-						                                                         + ".bkp"));
+//						new File(contentFolder + usrConfig).createNewFile();
+//						copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
+						e1.printStackTrace();
+						System.out.println("- ERROR Creating user cfg bkp");
+						writer.write("- ERROR Creating user cfg bkp\n");
 					}
-					copyScript(new File(contentFolder + passConfig), new File(contentFolder + passConfig
-					                                                          + ".bkp"));
 					
+					copyScript(new File(contentFolder + passConfig), new File(contentFolder + passConfig + ".bkp"));
 				}
 				
 				// If only clean_install updater settings in updater_cfg.xml are set "false"
 				System.out.println("- Updating DATA folder");
 				writer.write("- Updating DATA folder");
 				lblNewLabel_2.setVisible(true);
-				ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File(updateFolder1
-				                                                                           + contentFolder),
-				                                                                  null, true));
-				ArrayList<File> alocal = new ArrayList<File>(FileUtils.listFiles(new File(contentFolder),
-				                                                                 null, true));
+				
+				ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File(updateFolder1 + contentFolder), null, true));
+				ArrayList<File> alocal = new ArrayList<File>(FileUtils.listFiles(new File(contentFolder), null, true));
 				ArrayList<String> namesremote = new ArrayList<String>(aremote.size());
 				ArrayList<String> nameslocal = new ArrayList<String>(alocal.size());
+				
 				System.out.println(aremote);
 				System.out.println(alocal);
 				
+				System.out.println("Remote files:");
 				for (int i = 0; i < aremote.size(); i++)
 				{
 					namesremote.add(aremote.get(i).getName());
 				}
 				
+				System.out.println("\nLocal files:");
 				for (int i = 0; i < alocal.size(); i++)
 				{
 					nameslocal.add(alocal.get(i).getName());
@@ -369,7 +380,7 @@ public class Main extends JFrame
 				
 				for (int i = 0; i < namesremote.size(); i++)
 				{
-					if (!namesremote.get(i).contains(".db"))
+					if (!namesremote.get(i).contains(".db") && !namesremote.get(i).contains(".dll"))
 					{
 						if (!nameslocal.contains(namesremote.get(i)))
 						{
@@ -379,8 +390,7 @@ public class Main extends JFrame
 						else
 						{
 							System.out.println("Contains FileName: " + namesremote.get(i));
-							if (aremote.get(i).lastModified() > alocal.get(nameslocal.indexOf(namesremote.get(i)))
-							                                          .lastModified()
+							if (aremote.get(i).lastModified() > alocal.get(nameslocal.indexOf(namesremote.get(i))).lastModified()
 							    || (namesremote.get(i).equals("user_cfg.xml") && ovrwt_usrcfg.equalsIgnoreCase("true")))
 							// The second condition forces "user_cfg.xml" to update if it's set on updater_cfg.xml
 							{
@@ -392,18 +402,19 @@ public class Main extends JFrame
 				}
 				
 				// If both updater settings in updater_cfg.xml are set "false"
-				if (!ovrwt_usrcfg.equalsIgnoreCase("true"))
+				if (ovrwt_usrcfg.equalsIgnoreCase("false"))
 				{
 					System.out.println("- Restoring user cfg\n");
 					writer.write("- Restoring user cfg\n");
 					lblNewLabel_3.setVisible(true);
-					copyScript(new File(contentFolder + usrConfig + ".bkp"), new File(contentFolder
-					                                                                  + usrConfig));
-					copyScript(new File(contentFolder + passConfig + ".bkp"), new File(contentFolder
-					                                                                   + passConfig));
+					
+					copyScript(new File(contentFolder + usrConfig + ".bkp"), new File(contentFolder + usrConfig));
+					copyScript(new File(contentFolder + passConfig + ".bkp"), new File(contentFolder + passConfig));
+					
 					System.out.println("- Deleting old file");
 					writer.write("- Deleting old file\n");
 					lblNewLabel_4.setVisible(true);
+					
 					new File(contentFolder + usrConfig + ".bkp").delete();
 					new File(contentFolder + passConfig + ".bkp").delete();
 				}
@@ -414,13 +425,11 @@ public class Main extends JFrame
 			System.out.println("- Starting new application");
 			writer.write("- Starting new application\n");
 			
-			ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd "
-			                                                             + new File("").getAbsolutePath()
-			                                                             + " && java -jar \"" + toolFile
-			                                                             + "\"");
+			ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd " + new File("").getAbsolutePath() + " && java -jar \"" + toolFile + "\"");
 			
 			System.out.println("Update successful");
 			writer.write("Update successful\n");
+			
 			try
 			{
 				/* Process p = */builder.start();
@@ -431,36 +440,37 @@ public class Main extends JFrame
 				System.out.println("Could not restart the application");
 				writer.write("Could not restart the application\n");
 				writer.write(e.getMessage() + "\n");
+				
 				e.printStackTrace();
+				
 				writer.close();
 				System.exit(0);
 			}
-			writer.close();
 			
+			writer.close();
 		}
 		catch (IOException e2)
 		{
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
+			
 			try
 			{
 				writer.close();
+				System.exit(0);
 			}
 			catch (IOException e)
 			{
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.exit(0);
 		}
 		
 		try
 		{
 			writer.close();
+			System.exit(0);
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
