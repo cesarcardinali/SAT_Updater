@@ -203,6 +203,8 @@ public class Main extends JFrame
 				else if (e.getName().equals("content_folder"))
 				{
 					contentFolder = (e.getValue());
+					if(!contentFolder.endsWith("/"))
+						contentFolder += "/";
 					
 				}
 				else if (e.getName().equals("usr_config"))
@@ -217,22 +219,22 @@ public class Main extends JFrame
 				}
 				else if (e.getName().equals("update_path1"))
 				{
-					updateFolder1 = (e.getValue() + "/");
+					updateFolder1 = (e.getValue());
+					if(!updateFolder1.endsWith("/"))
+						updateFolder1 += "/";
 					
 				}
 				else if (e.getName().equals("update_path2"))
 				{
-					updateFolder2 = (e.getValue() + "/");
-					
-				}
-				else if (e.getName().equals("sys_config"))
-				{
-					remoteCfgFile = updateFolder1 + (e.getValue());
+					updateFolder2 = (e.getValue());
+					if(!updateFolder2.endsWith("/"))
+						updateFolder2 += "/";
 					
 				}
 			}
 			
 			System.out.println("Configs: " + configLocation);
+			remoteCfgFile = updateFolder1 + configLocation;
 			System.out.println("Remote Config File: " + remoteCfgFile);
 			System.out.println("Content Folder: " + contentFolder);
 			System.out.println("Update path1: " + updateFolder1 + "\nUpdate path2: " + updateFolder2 + "\nUser Config: " + usrConfig + "\nPass Config: "
@@ -331,6 +333,7 @@ public class Main extends JFrame
 			}
 			else
 			{
+				// If user configs should not be overwrited
 				if (ovrwt_usrcfg.equalsIgnoreCase("false"))
 				{
 					System.out.println("- Creating user cfg bkp");
@@ -343,8 +346,8 @@ public class Main extends JFrame
 					}
 					catch (IOException e1)
 					{
-//						new File(contentFolder + usrConfig).createNewFile();
-//						copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
+						new File(contentFolder + usrConfig).createNewFile();
+						copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
 						e1.printStackTrace();
 						System.out.println("- ERROR Creating user cfg bkp");
 						writer.write("- ERROR Creating user cfg bkp\n");
@@ -355,7 +358,7 @@ public class Main extends JFrame
 				
 				// If only clean_install updater settings in updater_cfg.xml are set "false"
 				System.out.println("- Updating DATA folder");
-				writer.write("- Updating DATA folder");
+				writer.write("- Updating DATA folder\n");
 				lblNewLabel_2.setVisible(true);
 				
 				ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File(updateFolder1 + contentFolder), null, true));
@@ -385,7 +388,7 @@ public class Main extends JFrame
 						if (!nameslocal.contains(namesremote.get(i)))
 						{
 							System.out.println("Does not contain FileName: " + namesremote.get(i));
-							FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
+							FileUtils.copyFile(aremote.get(i), new File(aremote.get(i).getAbsolutePath().replace(updateFolder1.replace("/", "\\"), "")));
 						}
 						else
 						{
@@ -395,7 +398,7 @@ public class Main extends JFrame
 							// The second condition forces "user_cfg.xml" to update if it's set on updater_cfg.xml
 							{
 								System.out.println("Newer File: " + namesremote.get(i));
-								FileUtils.copyFileToDirectory(aremote.get(i), new File(contentFolder));
+								FileUtils.copyFile(aremote.get(i), new File(aremote.get(i).getAbsolutePath().replace(updateFolder1.replace("/", "\\"), "")));
 							}
 						}
 					}
