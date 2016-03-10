@@ -10,7 +10,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -25,7 +27,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 
 
-public class Main extends JFrame
+public class Updater extends JFrame
 {
 	/**
 	 * Global variables.
@@ -49,6 +51,8 @@ public class Main extends JFrame
 	private static String       ovrwt_usrcfg;
 	private static String       clean_install;
 	
+	static BufferedWriter       logWriter        = null;
+	
 	/**
 	 * Launch application.
 	 */
@@ -61,7 +65,7 @@ public class Main extends JFrame
 			{
 				try
 				{
-					Main frame = new Main();
+					Updater frame = new Updater();
 					frame.setVisible(true);
 					
 					new Thread(new Runnable()
@@ -88,7 +92,7 @@ public class Main extends JFrame
 	/**
 	 * Create the frame.
 	 */
-	public Main()
+	public Updater()
 	{
 		setResizable(false);
 		setTitle("SAT Updater");
@@ -174,7 +178,6 @@ public class Main extends JFrame
 	/**
 	 * Update function.
 	 */
-	
 	private static void loadInitialData()
 	{
 		try
@@ -203,7 +206,7 @@ public class Main extends JFrame
 				else if (e.getName().equals("content_folder"))
 				{
 					contentFolder = (e.getValue());
-					if(!contentFolder.endsWith("/"))
+					if (!contentFolder.endsWith("/"))
 						contentFolder += "/";
 					
 				}
@@ -220,25 +223,31 @@ public class Main extends JFrame
 				else if (e.getName().equals("update_path1"))
 				{
 					updateFolder1 = (e.getValue());
-					if(!updateFolder1.endsWith("/"))
+					if (!updateFolder1.endsWith("/"))
 						updateFolder1 += "/";
 					
 				}
 				else if (e.getName().equals("update_path2"))
 				{
 					updateFolder2 = (e.getValue());
-					if(!updateFolder2.endsWith("/"))
+					if (!updateFolder2.endsWith("/"))
 						updateFolder2 += "/";
 					
 				}
 			}
 			
-			System.out.println("Configs: " + configLocation);
 			remoteCfgFile = updateFolder1 + configLocation;
+			
+			System.out.println("Configs: " + configLocation);
 			System.out.println("Remote Config File: " + remoteCfgFile);
 			System.out.println("Content Folder: " + contentFolder);
 			System.out.println("Update path1: " + updateFolder1 + "\nUpdate path2: " + updateFolder2 + "\nUser Config: " + usrConfig + "\nPass Config: "
 			                   + passConfig);
+			
+			addLogLine("Configs: " + configLocation);
+			addLogLine("Remote Config File: " + remoteCfgFile);
+			addLogLine("Content Folder: " + contentFolder);
+			addLogLine("Update path1: " + updateFolder1 + "\nUpdate path2: " + updateFolder2 + "\nUser Config: " + usrConfig + "\nPass Config: " + passConfig);
 			
 			// Now, read the remote system cfg file
 			xmlFile1 = new File(remoteCfgFile);
@@ -275,32 +284,40 @@ public class Main extends JFrame
 	
 	private static void updateApplication()
 	{
-		BufferedWriter writer = null;
 		lblNewLabel_0.setVisible(true);
+		
+		// Clear old log
+		new File("update_log.txt").delete();
 		
 		try
 		{
-			writer = new BufferedWriter(new FileWriter(new File("update_log.txt")));
-			
 			System.out.println("Updating ...");
-			writer.write("Updating ...\n");
+			addLogLine("Updating ...\n");
 			
 			System.out.println("- Updating jar file");
 			
 			lblNewLabel_0.setVisible(true);
-			writer.write("- Updating jar file\n");
+			addLogLine("- Updating jar file\n");
 			
 			try
 			{
-				copyScript(new File(updateFolder1 + toolFile), new File(toolFile));
+				if(new File(updateFolder1 + toolFile).lastModified() > new File(toolFile).lastModified())
+				{
+					lblNewLabel_0.setVisible(true);
+					addLogLine("- Updating jar file\n");
+					copyScript(new File(updateFolder1 + toolFile), new File(toolFile));
+				}
+				else
+				{
+					addLogLine("- SAT jar file is up to date\n");
+				}
 			}
 			catch (IOException e1)
 			{
 				System.out.println("Could not update the JAR file. Process cancelled");
-				writer.write("Could not update the JAR file. Process cancelled\n");
-				writer.write(e1.getMessage() + "\n");
+				addLogLine("Could not update the JAR file. Process cancelled\n");
+				addLogLine(e1.getMessage() + "\n");
 				e1.printStackTrace();
-				writer.close();
 				
 				System.exit(0);
 			}
@@ -310,8 +327,8 @@ public class Main extends JFrame
 			{
 				System.out.println("- Performing a clean reinstallation");
 				System.out.println("- Recreating DATA folder");
-				writer.write("- Performing a clean reinstallation\n");
-				writer.write("- Recreating DATA folder\n");
+				addLogLine("- Performing a clean reinstallation\n");
+				addLogLine("- Recreating DATA folder\n");
 				
 				lblNewLabel_2.setVisible(true);
 				
@@ -324,10 +341,9 @@ public class Main extends JFrame
 				catch (IOException e)
 				{
 					System.out.println("Could not recreate the DATA folder. Process cancelled");
-					writer.write("Could not recreate the DATA folder. Process cancelled\n");
-					writer.write(e.getMessage() + "\n");
+					addLogLine("Could not recreate the DATA folder. Process cancelled\n");
+					addLogLine(e.getMessage() + "\n");
 					e.printStackTrace();
-					writer.close();
 					System.exit(0);
 				}
 			}
@@ -337,7 +353,7 @@ public class Main extends JFrame
 				if (ovrwt_usrcfg.equalsIgnoreCase("false"))
 				{
 					System.out.println("- Creating user cfg bkp");
-					writer.write("- Creating user cfg bkp\n");
+					addLogLine("- Creating user cfg bkp\n");
 					lblNewLabel_1.setVisible(true);
 					
 					try
@@ -350,7 +366,8 @@ public class Main extends JFrame
 						copyScript(new File(contentFolder + usrConfig), new File(contentFolder + usrConfig + ".bkp"));
 						e1.printStackTrace();
 						System.out.println("- ERROR Creating user cfg bkp");
-						writer.write("- ERROR Creating user cfg bkp\n");
+						addLogLine("- ERROR Creating user cfg bkp\n");
+						addLogLine(e1.getMessage() + "\n");
 					}
 					
 					copyScript(new File(contentFolder + passConfig), new File(contentFolder + passConfig + ".bkp"));
@@ -358,7 +375,7 @@ public class Main extends JFrame
 				
 				// If only clean_install updater settings in updater_cfg.xml are set "false"
 				System.out.println("- Updating DATA folder");
-				writer.write("- Updating DATA folder\n");
+				addLogLine("- Updating DATA folder\n");
 				lblNewLabel_2.setVisible(true);
 				
 				ArrayList<File> aremote = new ArrayList<File>(FileUtils.listFiles(new File(updateFolder1 + contentFolder), null, true));
@@ -380,6 +397,8 @@ public class Main extends JFrame
 				{
 					nameslocal.add(alocal.get(i).getName());
 				}
+				
+				addLogLine("- Local and Remote files loaded\n");
 				
 				for (int i = 0; i < namesremote.size(); i++)
 				{
@@ -408,14 +427,14 @@ public class Main extends JFrame
 				if (ovrwt_usrcfg.equalsIgnoreCase("false"))
 				{
 					System.out.println("- Restoring user cfg\n");
-					writer.write("- Restoring user cfg\n");
+					addLogLine("- Restoring user cfg\n");
 					lblNewLabel_3.setVisible(true);
 					
 					copyScript(new File(contentFolder + usrConfig + ".bkp"), new File(contentFolder + usrConfig));
 					copyScript(new File(contentFolder + passConfig + ".bkp"), new File(contentFolder + passConfig));
 					
 					System.out.println("- Deleting old file");
-					writer.write("- Deleting old file\n");
+					addLogLine("- Deleting old file\n");
 					lblNewLabel_4.setVisible(true);
 					
 					new File(contentFolder + usrConfig + ".bkp").delete();
@@ -426,12 +445,12 @@ public class Main extends JFrame
 			
 			lblNewLabel_5.setVisible(true);
 			System.out.println("- Starting new application");
-			writer.write("- Starting new application\n");
+			addLogLine("- Starting new application\n");
 			
 			ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd " + new File("").getAbsolutePath() + " && java -jar \"" + toolFile + "\"");
 			
 			System.out.println("Update successful");
-			writer.write("Update successful\n");
+			addLogLine("Update successful\n");
 			
 			try
 			{
@@ -441,40 +460,17 @@ public class Main extends JFrame
 			catch (IOException | InterruptedException e)
 			{
 				System.out.println("Could not restart the application");
-				writer.write("Could not restart the application\n");
-				writer.write(e.getMessage() + "\n");
+				addLogLine("Could not restart the application\n");
+				addLogLine(e.getMessage() + "\n");
 				
 				e.printStackTrace();
-				
-				writer.close();
 				System.exit(0);
 			}
-			
-			writer.close();
 		}
 		catch (IOException e2)
 		{
+			addLogLine("- ERROR:\n" + e2.getMessage());
 			e2.printStackTrace();
-			
-			try
-			{
-				writer.close();
-				System.exit(0);
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		try
-		{
-			writer.close();
-			System.exit(0);
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
 		}
 		
 		System.exit(0);
@@ -486,5 +482,19 @@ public class Main extends JFrame
 	public static void copyScript(File source, File dest) throws IOException
 	{
 		FileUtils.copyFile(source, dest);
+	}
+	
+	private static void addLogLine(String line)
+	{
+		try
+		{
+			logWriter = new BufferedWriter(new FileWriter(new File("update_log.txt"), true));
+			logWriter.write(new SimpleDateFormat("HH:mm:ss.SSS").format(new Date()) + "\t" + line + "\n");
+			logWriter.close();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }
